@@ -12,9 +12,5 @@
         public DateTime CreatedAt { get; set; }
         public DateTime LastSeenAt { get; set; }
         public bool IsActive { get; set; }
-
-        public User()
-        {
-        }
     }
 }
