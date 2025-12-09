@@ -6,4 +6,15 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="16.0.0" />
+    <PackageReference Include="AWSSDK.DynamoDBv2" Version="4.0.10.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\UsersMembers.Aplication\UsersMembers.Application.csproj" />
+    <ProjectReference Include="..\UsersMembers.Domain\UsersMembers.Domain.csproj" />
+  </ItemGroup>
+
 </Project>
