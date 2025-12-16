@@ -1,11 +1,10 @@
 ﻿using UsersMembers.Application.ViewModels.User;
+using UsersMembers.Domain.Interface;
 
 namespace UsersMembers.Application.Interface
 {
-    public interface IUserService
+    public interface IUserService : IBaseRepository<RequestUser>
     {
-        Task<List<ResponseUser>> CreateUsers(RequestUser requestUser);
-        List<ResponseUser> UpdateUsers(RequestUser requestUser);
-        List<ResponseUser> DeleteUsers(RequestUser requestUser);
+        Task<List<ResponseUser>> GetByCPF(RequestUser requestUser);
     }
 }

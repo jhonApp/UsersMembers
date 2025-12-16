@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using UsersMembers.Domain.Entities.Audit;
 
 namespace UsersMembers.Infrastructure.Persistence
 {
@@ -9,7 +8,5 @@ namespace UsersMembers.Infrastructure.Persistence
             : base(options)
         {
         }
-
-        public DbSet<AuditLog> AuditLogs { get; set; } = null!;
     }
 }

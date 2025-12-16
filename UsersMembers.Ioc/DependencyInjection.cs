@@ -3,7 +3,7 @@ using Amazon.DynamoDBv2.DataModel;
 using Microsoft.Extensions.DependencyInjection;
 using UsersMembers.Application.Interface;
 using UsersMembers.Application.Service.Users;
-using UsersMembers.Infrastructure.Services;
+using UsersMembers.Infrastructure.Audit;
 
 namespace UsersMembers.Ioc
 {
@@ -17,9 +17,9 @@ namespace UsersMembers.Ioc
                new AmazonDynamoDBClient(Amazon.RegionEndpoint.GetBySystemName(awsRegion)));
 
             services.AddSingleton<IDynamoDBContext, DynamoDBContext>();
-
             services.AddScoped<IUserService, UsersService>();
-            services.AddScoped<IAuditService, AuditService>();
+            services.AddSingleton<IAuditEventPublisher, AuditEventPublisher>();
+
 
             return services;
         }

@@ -18,7 +18,7 @@ namespace UsersMembers.API.Controllers
         [HttpPost("create")]
         public ActionResult<ResponseUser> CreateUser(RequestUser request)
         {
-            return Ok(_userService.CreateUsers(request));
+            return Ok(_userService.Create(request));
         }
     }
 }
