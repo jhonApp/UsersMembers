@@ -2,5 +2,6 @@
 {
     public class RequestUser
     {
+        public string Email { get; set; }
     }
 }

@@ -4,9 +4,9 @@ namespace UsersMembers.Domain.Interface
 {
     public interface IBaseRepository<TEntity> where TEntity: class
     {
-        public ResultOperation Create(TEntity entity);
-        public TEntity GetById(int id);
-        public ResultOperation Update(TEntity entity);
-        public ResultOperation Delete(TEntity entity);
+        public Task<ResultOperation> CreateAsync(TEntity entity, CancellationToken ct = default);
+        public Task<TEntity> GetByIdAsync(string id);
+        public Task<ResultOperation> UpdateAsync(TEntity entity, CancellationToken ct = default);
+        public Task<ResultOperation> DeleteAsync(TEntity entity, CancellationToken ct = default);
     }
 }

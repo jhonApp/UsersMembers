@@ -3,7 +3,11 @@ using Amazon.DynamoDBv2.DataModel;
 using Microsoft.Extensions.DependencyInjection;
 using UsersMembers.Application.Interface;
 using UsersMembers.Application.Service.Users;
+using UsersMembers.Application.EventHandlers;
 using UsersMembers.Infrastructure.Audit;
+using UsersMembers.Infrastructure.Events;
+using UsersMembers.Domain.Interfaces;
+using UsersMembers.Domain.Events.UserEvents;
 
 namespace UsersMembers.Ioc
 {
@@ -20,6 +24,9 @@ namespace UsersMembers.Ioc
             services.AddScoped<IUserService, UsersService>();
             services.AddSingleton<IAuditEventPublisher, AuditEventPublisher>();
 
+            // Domain Events
+            services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
+            services.AddScoped<IDomainEventHandler<UserCreatedEvent>, AuditEventHandler>();
 
             return services;
         }

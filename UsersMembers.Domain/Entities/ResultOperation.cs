@@ -2,15 +2,16 @@
 {
     public class ResultOperation
     {
-        public ResultOperation(bool sucess, IEnumerable<MessageOperation> messages)
+        public ResultOperation() { }
+
+        public ResultOperation(bool success, IEnumerable<MessageOperation> messages)
         {
-            Sucess = sucess;
+            Success = success;
             Message = messages;
         }
 
-        public bool Sucess { get; set; }
+        public bool Success { get; set; }
         public IEnumerable<MessageOperation> Message { get; set; }
-
-
+        public object Data { get; set; }
     }
 }
