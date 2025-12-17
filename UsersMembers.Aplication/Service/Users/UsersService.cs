@@ -1,47 +1,51 @@
 ﻿using UsersMembers.Application.Interface;
 using UsersMembers.Application.ViewModels.User;
 using UsersMembers.Domain.Entities;
-using UsersMembers.Domain.Entities.Audit;
+using UsersMembers.Domain.Events.UserEvents;
+using UsersMembers.Domain.Interfaces;
 
 namespace UsersMembers.Application.Service.Users
 {
     public class UsersService : IUserService
     {
-        private readonly IAuditEventPublisher _auditPublisher;
+        private readonly IDomainEventDispatcher _dispatcher;
         private readonly ICurrentUserService _currentUser;
         private readonly IUsersRepository _usersRepository;
 
         public UsersService(
-        IAuditEventPublisher auditPublisher,
+        IDomainEventDispatcher dispatcher,
         ICurrentUserService currentUser,
         IUsersRepository usersRepository)
         {
-            _auditPublisher = auditPublisher;
+            _dispatcher = dispatcher;
             _currentUser = currentUser;
             _usersRepository = usersRepository;
         }
 
-        public ResultOperation Create(RequestUser entity)
+        public async Task<ResultOperation> CreateAsync(RequestUser entity, CancellationToken ct = default)
         {
-            await _usersRepository.CreateAsync(newUser, ct);
-            var response = new List<ResponseUser> { MapToResponse(newUser) };
-
-            var auditEvent = new AuditEvent
+            var newUser = new User 
             {
-                EventType   = "User.Created",
-                UserId      = _currentUser.UserId,
-                EntityId    = newUser.Id,
-                EntityType  = "User",
-                Description = "User created",
-                Data        = new { newUser.Id, newUser.Email },
-                CorrelationId = _currentUser.CorrelationId
+               Id = Guid.NewGuid().ToString(),
+               Email = entity.Email
             };
 
-            await _auditPublisher.PublishAsync(auditEvent, ct);
-            return response;
+            await _usersRepository.CreateAsync(newUser, ct);
+            
+            var userCreatedEvent = new UserCreatedEvent(
+                _currentUser.UserId,
+                newUser.Id,
+                newUser.Email,
+                _currentUser.CorrelationId
+            );
+
+            await _dispatcher.Dispatch(userCreatedEvent, ct);
+
+            var response = new ResponseUser { Id = newUser.Id, Email = newUser.Email };
+            return new ResultOperation { Success = true, Data = response }; 
         }
 
-        public ResultOperation Delete(RequestUser entity)
+        public Task<ResultOperation> DeleteAsync(RequestUser entity, CancellationToken ct = default)
         {
             throw new NotImplementedException();
         }
@@ -51,14 +55,14 @@ namespace UsersMembers.Application.Service.Users
             throw new NotImplementedException();
         }
 
-        public RequestUser GetById(int id)
+        public Task<RequestUser> GetByIdAsync(string id)
         {
             throw new NotImplementedException();
         }
 
-        public ResultOperation Update(RequestUser entity)
+        public Task<ResultOperation> UpdateAsync(RequestUser entity, CancellationToken ct = default)
         {
-            throw new NotImplementedException();
+             throw new NotImplementedException();
         }
     }
 }

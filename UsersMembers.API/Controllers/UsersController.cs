@@ -16,9 +16,16 @@ namespace UsersMembers.API.Controllers
         }
 
         [HttpPost("create")]
-        public ActionResult<ResponseUser> CreateUser(RequestUser request)
+        public async Task<IActionResult> CreateUser(RequestUser request, CancellationToken ct)
         {
-            return Ok(_userService.Create(request));
+            var result = await _userService.CreateAsync(request, ct);
+            
+            if (result.Success)
+            {
+                return Ok(result.Data);
+            }
+
+            return BadRequest(result.Message);
         }
     }
 }
