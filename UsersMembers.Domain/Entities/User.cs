@@ -1,7 +1,11 @@
-﻿namespace UsersMembers.Domain.Entities
+﻿using Amazon.DynamoDBv2.DataModel;
+
+namespace UsersMembers.Domain.Entities
 {
+    [DynamoDBTable("Users")]
     public class User
     {
+        [DynamoDBHashKey]
         public string Id { get; set; }
         public int ChurchId { get; set; }
         public string? Name { get; set; }
