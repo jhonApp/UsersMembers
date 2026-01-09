@@ -8,6 +8,7 @@ using UsersMembers.Infrastructure.Audit;
 using UsersMembers.Infrastructure.Events;
 using UsersMembers.Domain.Interfaces;
 using UsersMembers.Domain.Events.UserEvents;
+using UsersMembers.Infrastructure.Persistence.Repositories;
 
 namespace UsersMembers.Ioc
 {
@@ -22,6 +23,8 @@ namespace UsersMembers.Ioc
 
             services.AddSingleton<IDynamoDBContext, DynamoDBContext>();
             services.AddScoped<IUserService, UsersService>();
+            services.AddScoped<ICurrentUserService, CurrentService>();
+            services.AddScoped<IUsersRepository, UsersRepository>();
             services.AddSingleton<IAuditEventPublisher, AuditEventPublisher>();
 
             // Domain Events
