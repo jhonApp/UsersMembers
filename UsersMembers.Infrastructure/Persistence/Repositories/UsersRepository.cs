@@ -20,9 +20,10 @@ namespace UsersMembers.Infrastructure.Persistence.Repositories
         }
 
         // Explicit implementation for IBaseRepository<User> to handle the return type conflict
-        Task<ResultOperation> IBaseRepository<User>.CreateAsync(User entity, CancellationToken ct)
+        async Task<ResultOperation> IBaseRepository<User>.CreateAsync(User entity, CancellationToken ct)
         {
-            await _context.SaveAsync(user, ct);
+            await _context.SaveAsync(entity, ct);
+            return new ResultOperation { Success = true };
         }
 
         public async Task<User> GetByIdAsync(string id)

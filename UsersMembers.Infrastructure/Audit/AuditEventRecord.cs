@@ -1,6 +1,7 @@
 ﻿using Amazon.DynamoDBv2.DataModel;
 using UsersMembers.Application.Interface;
 using UsersMembers.Domain.Entities.Audit;
+using UsersMembers.Domain.Interfaces;
 
 namespace UsersMembers.Infrastructure.Audit
 {
@@ -23,30 +24,21 @@ namespace UsersMembers.Infrastructure.Audit
 
     public class AuditEventPublisher : IAuditEventPublisher
     {
-        private readonly IDynamoDBContext _context;
+        private readonly IEventProducer _producer;
+        private readonly string _queueUrl;
 
-        public AuditEventPublisher(IDynamoDBContext context)
+        public AuditEventPublisher(IEventProducer producer)
         {
-            _context = context;
+            _producer = producer;
+            // In a real scenario, inject IConfiguration to get this value
+            _queueUrl = Environment.GetEnvironmentVariable("AUDIT_QUEUE_URL") ?? "AuditLogQueue";
         }
 
         public async Task PublishAsync(AuditEvent auditEvent, CancellationToken ct = default)
         {
-            var record = new AuditEventRecord
-            {
-                EventType    = auditEvent.EventType,
-                UserId       = auditEvent.UserId,
-                EntityId     = auditEvent.EntityId,
-                EntityType   = auditEvent.EntityType,
-                Timestamp    = auditEvent.Timestamp,
-                Description  = auditEvent.Description,
-                CorrelationId = auditEvent.CorrelationId,
-                DataJson     = auditEvent.Data != null
-                    ? System.Text.Json.JsonSerializer.Serialize(auditEvent.Data)
-                    : null
-            };
-
-            await _context.SaveAsync(record, ct);
+            // Send the domain event to SQS
+            // The Ingestion Lambda will picking it up and save to DynamoDB
+            await _producer.PublishAsync(auditEvent, _queueUrl);
         }
     }
 }

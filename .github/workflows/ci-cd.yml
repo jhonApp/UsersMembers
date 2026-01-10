@@ -1,0 +1,128 @@
+name: Production Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  SOLUTION_PATH: './UsersMembers.sln'
+  IAC_PROJECT_PATH: './UsersMembers/UsersMembers.Infrastructure.IaC'
+  LAMBDA_PUBLISH_DIR: './lambda-publish'
+
+jobs:
+  # ==============================================================================
+  # Job 1: CI & Quality (Build, Test, Security)
+  # ==============================================================================
+  build_and_test:
+    name: Build & Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET ${{ env.DOTNET_VERSION }}
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    # Caching NuGet packages for performance
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Restore Dependencies
+      run: dotnet restore ${{ env.SOLUTION_PATH }}
+
+    - name: Build Solution (Release)
+      run: dotnet build ${{ env.SOLUTION_PATH }} --configuration Release --no-restore
+
+    - name: Run Unit Tests
+      run: dotnet test ${{ env.SOLUTION_PATH }} --configuration Release --no-build --verbosity normal
+      # If tests fail, the pipeline stops here.
+
+    - name: Security Audit (Vulnerable Packages)
+      run: dotnet list ${{ env.SOLUTION_PATH }} package --vulnerable --include-transitive
+      # Optionally add '--fail-on-vulnerable' if supported or check exit code manually, 
+      # but standard 'dotnet list' returns 0 even with vulnerabilities unless configured.
+      # For stricter control, we can pipe to grep or use a specialized action. 
+      # For now, we print it. To FAIL on vulnerability, one would typically use tools like Snyk or 
+      # ensure the command returns non-zero. The user requested "fail the build".
+      # Since dotnet list package returns 0, we use a simple grep trick to fail if 'has the following vulnerable' appears.
+      # run: dotnet list ... | grep -q "has the following vulnerable" && exit 1 || exit 0
+      
+    - name: Enforce Security Check
+      run: |
+        dotnet list ${{ env.SOLUTION_PATH }} package --vulnerable --include-transitive > security_report.txt
+        cat security_report.txt
+        if grep -q "has the following vulnerable" security_report.txt; then
+          echo "Security Vulnerabilities Detected!"
+          exit 1
+        fi
+
+    # Publish Lambda Artifacts (Infrastructure project contains the Handlers)
+    # We publish the Infrastructure project to get the compiled binaries.
+    - name: Publish Lambda Binaries
+      run: dotnet publish ./UsersMembers/UsersMembers.Infrastructure/UsersMembers.Infrastructure.csproj -c Release -o ${{ env.LAMBDA_PUBLISH_DIR }}
+
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: lambda-build
+        path: ${{ env.LAMBDA_PUBLISH_DIR }}
+        retention-days: 1
+
+  # ==============================================================================
+  # Job 2: Continuous Deployment (CD)
+  # ==============================================================================
+  deploy:
+    name: Deploy to AWS
+    needs: build_and_test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      # We need checkout to get the IaC (CDK) source code.
+
+    - name: Download Build Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: lambda-build
+        path: ${{ env.LAMBDA_PUBLISH_DIR }}
+
+    - name: Setup Node.js (for CDK)
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install AWS CDK
+      run: npm install -g aws-cdk
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    # Deploy using CDK
+    # Pass the location of the downloaded artifact as an environment variable
+    # The C# Stack class has been modified to read LAMBDA_BINARY_PATH
+    - name: CDK Deploy
+      env:
+        LAMBDA_BINARY_PATH: ../../${{ env.LAMBDA_PUBLISH_DIR }}
+        # Explanation: CDK runs inside ./UsersMembers/UsersMembers.Infrastructure.IaC
+        # The artifact is at ./lambda-publish (root of workspace)
+        # So relative path is ../../lambda-publish
+      run: |
+        cd ${{ env.IAC_PROJECT_PATH }}
+        cdk deploy --require-approval never
