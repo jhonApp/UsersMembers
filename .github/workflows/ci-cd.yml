@@ -11,7 +11,7 @@ env:
   # Ajuste de caminhos baseado na estrutura padrão .NET
   SOLUTION_PATH: './UsersMembers.sln'
   # IMPORTANTE: Aponte para o projeto das LAMBDAS (Serverless), não o Infrastructure puro
-  LAMBDA_PROJECT_PATH: './UsersMembers.Infrastructure.Serverless'
+  LAMBDA_PROJECT_PATH: './UsersMembers.Infrastructure/UsersMembers.Infrastructure.csproj'
   # Onde está o código do CDK
   IAC_PROJECT_PATH: './UsersMembers.Infrastructure.IaC'
   # Pasta temporária para o artefato
