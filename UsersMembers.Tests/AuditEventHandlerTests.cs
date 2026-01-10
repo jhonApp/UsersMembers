@@ -9,7 +9,7 @@ using UsersMembers.Domain.Entities.Audit;
 using UsersMembers.Domain.Events.UserEvents;
 using Xunit;
 
-namespace UsersMembers.UnitTests
+namespace UsersMembers.Tests
 {
     public class AuditEventHandlerTests
     {
