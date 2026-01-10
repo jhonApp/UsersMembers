@@ -1,5 +1,6 @@
 ﻿using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
+using Amazon.SQS;
 using Microsoft.Extensions.DependencyInjection;
 using UsersMembers.Application.Interface;
 using UsersMembers.Application.Service.Users;
@@ -20,6 +21,11 @@ namespace UsersMembers.Ioc
         {
             services.AddSingleton<IAmazonDynamoDB>(sp =>
                new AmazonDynamoDBClient(Amazon.RegionEndpoint.GetBySystemName(awsRegion)));
+
+            services.AddSingleton<IAmazonSQS>(sp =>
+               new AmazonSQSClient(Amazon.RegionEndpoint.GetBySystemName(awsRegion)));
+
+            services.AddSingleton<IEventProducer, SqsEventProducer>();
 
             services.AddSingleton<IDynamoDBContext, DynamoDBContext>();
             services.AddScoped<IUserService, UsersService>();
